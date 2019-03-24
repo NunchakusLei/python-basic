@@ -22,14 +22,20 @@ if __name__ == '__main__':
     host_config = load_host_config(args.host_config)
 
     # Setup socket
+    addr = (host_config.hostname, host_config.port)
     s = socket.socket()
-    s.connect((host_config.hostname, host_config.port))
+    s.connect(addr)
 
     print("Connected to server.")
 
     data = input("Type in the message to send > ")
     print("Sending message: {:s}".format(data))
-    s.send(data.encode())
+
+    # TCP
+    # s.send(data.encode())
+
+    # UDP
+    s.sendto(data.encode(), addr)
 
 
 

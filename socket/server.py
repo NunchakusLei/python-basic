@@ -30,8 +30,13 @@ if __name__ == '__main__':
     conn, addr = s.accept()
     print('Got connection from', addr)
 
-    data = conn.recv(1024)
-    print('Reviced message: {:s}'.format(data.decode()))
+    # TCP
+    # data = conn.recv(1024)
+    # print('Reviced message: {:s}'.format(data.decode()))
+
+    # UDP
+    data = conn.recvfrom(1024)
+    print('Reviced message: {:s}'.format(data[0].decode()))
 
 
 
