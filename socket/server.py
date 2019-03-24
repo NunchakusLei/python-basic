@@ -1,6 +1,6 @@
 import socket
 import argparse
-from lib import load_host_config
+from lib import load_host_config, config_logger
 
 
 def config_argparser(ap):
@@ -19,6 +19,8 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # Load configurations
+    app_name = __file__.split('/')[-1].split('.')[0]
+    log = config_logger(app_name)
     host_config = load_host_config(args.host_config)
 
     # Setup socket
@@ -26,9 +28,9 @@ if __name__ == '__main__':
     s.bind((host_config.hostname, host_config.port))
     s.listen(5)
 
-    print('Server up, waiting for connection ... ')
+    log.info('Server up, waiting for connection ... ')
     conn, addr = s.accept()
-    print('Got connection from', addr)
+    log.info('Got connection from {:s}'.format(str(addr)))
 
     # TCP
     # data = conn.recv(1024)
@@ -36,7 +38,7 @@ if __name__ == '__main__':
 
     # UDP
     data = conn.recvfrom(1024)
-    print('Reviced message: {:s}'.format(data[0].decode()))
+    log.debug('Reviced message: {:s}'.format(data[0].decode()))
 
 
 

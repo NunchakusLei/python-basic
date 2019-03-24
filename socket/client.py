@@ -1,6 +1,6 @@
 import socket
 import argparse
-from lib import load_host_config
+from lib import load_host_config, config_logger
 
 
 def config_argparser(ap):
@@ -19,6 +19,8 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # Load configurations
+    app_name = __file__.split('/')[-1].split('.')[0]
+    log = config_logger(app_name)
     host_config = load_host_config(args.host_config)
 
     # Setup socket
@@ -26,10 +28,10 @@ if __name__ == '__main__':
     s = socket.socket()
     s.connect(addr)
 
-    print("Connected to server.")
+    log.info("Connected to server.")
 
     data = input("Type in the message to send > ")
-    print("Sending message: {:s}".format(data))
+    log.info("Sending message: {:s}".format(data))
 
     # TCP
     # s.send(data.encode())
