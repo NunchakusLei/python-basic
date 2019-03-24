@@ -29,16 +29,21 @@ if __name__ == '__main__':
     s.listen(5)
 
     log.info('Server up, waiting for connection ... ')
-    conn, addr = s.accept()
-    log.info('Got connection from {:s}'.format(str(addr)))
+    log.error('Error')
+    log.warning('Warning')
+    log.critical('Critical')
 
-    # TCP
-    # data = conn.recv(1024)
-    # print('Reviced message: {:s}'.format(data.decode()))
+    while True:
+        conn, addr = s.accept()
+        log.info('Got connection from {:s}'.format(str(addr)))
 
-    # UDP
-    data = conn.recvfrom(1024)
-    log.debug('Reviced message: {:s}'.format(data[0].decode()))
+        # TCP
+        # data = conn.recv(1024)
+        # print('Reviced message: {:s}'.format(data.decode()))
+
+        # UDP
+        data = conn.recvfrom(1024)
+        log.debug('Reviced message: {:s}'.format(data[0].decode()))
 
 
 
