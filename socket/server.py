@@ -29,9 +29,9 @@ if __name__ == '__main__':
     s.listen(5)
 
     log.info('Server up, waiting for connection ... ')
-    log.error('Error')
-    log.warning('Warning')
-    log.critical('Critical')
+    # log.error('Error')
+    # log.warning('Warning')
+    # log.critical('Critical')
 
     while True:
         conn, addr = s.accept()

@@ -14,11 +14,11 @@ COLOR_SEQ = "\033[1;%dm"
 BOLD_SEQ = "\033[1m"
 
 COLORS = {
-    'WARNING': YELLOW,
-    'INFO': WHITE,
     'DEBUG': BLUE,
+    'INFO': WHITE,
+    'WARNING': YELLOW,
+    'ERROR': RED,
     'CRITICAL': MAGENTA,
-    'ERROR': RED
 }
 
 
@@ -58,8 +58,8 @@ def config_logger(app_name):
     ch.setLevel(logging.DEBUG)
 
     # create formatter and add it to the handlers
-    formatter = logging.Formatter('%(asctime)s - %(name)s [%(levelname)s] - %(message)s')
-    FORMAT = '%(asctime)s - $BOLD%(name)s$RESET [%(levelname)19s] "%(message)s" ($BOLD%(filename)s$RESET:%(lineno)d)'
+    formatter = logging.Formatter('%(asctime)s - %(name)s [%(levelname)-8s] "%(message)s" (%(filename)s:%(lineno)d)')
+    FORMAT = '%(asctime)s - $BOLD%(name)s$RESET [%(levelname)-19s] "%(message)s" ($BOLD%(filename)s$RESET:%(lineno)d)'
     # FORMAT = "[{levelname:^8s}]"
     COLOR_FORMAT = formatter_message(FORMAT, use_color=True)
     color_formatter = ColoredFormatter(COLOR_FORMAT)
