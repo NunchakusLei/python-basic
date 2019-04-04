@@ -35,15 +35,24 @@ if __name__ == '__main__':
 
     while True:
         conn, addr = s.accept()
-        log.info('Got connection from {:s}'.format(str(addr)))
+        log.info('Got connection from {:}:{:}'.format(addr[0], addr[1]))
+        while True:
+            # conn, addr = s.accept()
+            # log.info('Got connection from {:s}'.format(str(addr)))
 
-        # TCP
-        # data = conn.recv(1024)
-        # print('Reviced message: {:s}'.format(data.decode()))
+            # TCP
+            data = conn.recv(1024)
+            log.debug('Reviced message from {:}:{:}: {:s}'.format(addr[0], addr[1], data.decode()))
+            # log.debug('Binary: {:s}'.format(str(data)))
+            # log.debug('Length: {:}'.format(len(data)))
 
-        # UDP
-        data = conn.recvfrom(1024)
-        log.debug('Reviced message: {:s}'.format(data[0].decode()))
+            # UDP
+            # data = conn.recvfrom(1024)
+            # log.debug('Reviced message from {:}: {:s}'.format(addr, data[0].decode()))
+
+            if len(data) == 0:
+                log.info("{:}:{:} hang up.".format(addr[0], addr[1]))
+                break
 
 
 

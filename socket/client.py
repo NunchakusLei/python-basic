@@ -1,7 +1,7 @@
 import socket
 import argparse
+import time
 from lib import load_host_config, config_logger
-
 
 def config_argparser(ap):
     ap.add_argument(
@@ -27,17 +27,27 @@ if __name__ == '__main__':
     addr = (host_config.hostname, host_config.port)
     s = socket.socket()
     s.connect(addr)
-
     log.info("Connected to server.")
 
-    data = input("Type in the message to send > ")
-    log.info("Sending message: {:s}".format(data))
+    sent_msg_count = 0
+    while True:
+        data = input("Type in the message to send > ")
+        sent_msg_count += 1
 
-    # TCP
-    # s.send(data.encode())
+        # TCP
+        # log.info("Sending message: {:s}".format(data))
+        # s.send(data.encode())
+        msg = "{:} {:}".format(data, sent_msg_count)
+        log.info("Sending message: {:s}".format(msg))
+        s.send(msg.encode())
 
-    # UDP
-    s.sendto(data.encode(), addr)
+        # # UDP
+        # for i in range(10):
+            # msg = "{:} {:}".format(data, i)
+            # log.info("Sending message: {:s}".format(msg))
+            # s.sendto(msg.encode(), addr)
+            # time.sleep(1)
 
+    s.close()
 
 
