@@ -39,7 +39,7 @@ if __name__ == '__main__':
         # s.send(data.encode())
         msg = "{:} {:}".format(data, sent_msg_count)
         log.info("Sending message: {:s}".format(msg))
-        s.send(msg.encode())
+        s.send(msg.encode(host_config.codec))
 
         # # UDP
         # for i in range(10):
