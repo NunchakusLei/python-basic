@@ -1,6 +1,7 @@
 import socket
 import argparse
 import threading
+import time
 from lib import load_host_config, config_logger
 
 
@@ -29,7 +30,7 @@ class SocketServer:
         # log.warning('Warning')
         # log.critical('Critical')
         while True:
-            # Accept new connection 
+            # Accept new connection
             conn, addr = self.listening()
 
             # Open new thread to handle client messages
@@ -70,7 +71,17 @@ class SocketServer:
                 conn.send(response.encode(self.config.codec))
 
     def message_handler(self, msg):
-        return None
+        return msg
+
+    def boardcast(self, msg):
+        for connection in self.connections:
+            conn = connection[0]
+            addr = conn.getpeername()
+            try:
+                conn.send(msg.encode(self.config.codec))
+                log.debug('Sending to {:}:{:}: {:s}'.format(addr[0], addr[1], msg))
+            except BrokenPipeError:
+                log.error('Failed to send {:}:{:}: {:s}'.format(addr[0], addr[1], msg))
 
 
 if __name__ == '__main__':
