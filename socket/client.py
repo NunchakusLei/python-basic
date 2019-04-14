@@ -2,6 +2,7 @@ import argparse
 import logging
 import socket
 import threading
+import sys
 from lib import load_host_config, config_logger
 
 
@@ -43,6 +44,7 @@ class SimpleSocketClient:
         self.running = False
 
         # Client exit operation
+        self.s.close()
         # TODO
 
         self.log.info('Client exit.')
@@ -52,10 +54,11 @@ class SimpleSocketClient:
             # Get user command
             cmd = self.get_usr_cmd()
 
-            # Open new thread to handle user command
-            new_thread = threading.Thread(target=self.cmd_callback, args=(cmd,))
-            new_thread.start()
-            # self._threads.append(new_thread)
+            if self.running:
+                # Open new thread to handle user command
+                new_thread = threading.Thread(target=self.cmd_callback, args=(cmd,))
+                new_thread.start()
+                # self._threads.append(new_thread)
 
     def _await_svr_msg(self):
         addr = self.s.getpeername()
@@ -67,7 +70,7 @@ class SimpleSocketClient:
 
             if len(data) == 0:
                 self.log.info("{:}:{:} hang up.".format(addr[0], addr[1]))
-                exit()
+                self.stop()
 
             msg = data.decode(self._config.codec)
             # self.log.debug('{:}:{:} say: {:}'.format(addr[0], addr[1], msg))
@@ -82,7 +85,7 @@ class SimpleSocketClient:
         return True
 
     def get_usr_cmd(self):
-        cmd = input("Type in command > ")
+        cmd = input("Type in command > ")  # TODO non-blocking
         return cmd
 
     def msg_callback(self, msg):

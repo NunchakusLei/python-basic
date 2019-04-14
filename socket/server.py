@@ -20,6 +20,7 @@ class SimpleSocketServer:
         self.s = socket.socket()
         self.s.bind((host_config.hostname, host_config.port))
         self.s.listen(5)
+        self.s.settimeout(10.0)
 
         # Server variables
         self.log = config_logger(self.__class__.__name__, log_level=log_level)
@@ -36,17 +37,34 @@ class SimpleSocketServer:
     def stop(self):
         # Server exit operation
         self.running = False
+        for conn in list(self._connections):
+            addr = conn.getpeername()
+            self._client_hangup(conn, addr, reason='server exit')
         # TODO
 
-    def _client_hangup(self, conn, addr):
-        self.log.info("{:}:{:} hang up.".format(addr[0], addr[1]))
-        self._connections.remove(conn)
-        self.log.debug('{:} live connection(s)'.format(len(self._connections)))
+    def _client_hangup(self, conn, addr, reason=None):
+        if reason is None:
+            self.log.info("{:}:{:} hang up.".format(addr[0], addr[1]))
+        else:
+            self.log.info("{:}:{:} hang up since {:}.".format(addr[0], addr[1], reason))
+
+        conn.close()
+        try:
+            self._connections.remove(conn)
+        except ValueError:
+            return
+
+        if self.running:
+            self.log.debug('{:} live connection(s)'.format(len(self._connections)))
 
     def _await_connections(self):
         while self.running:
-            # Accept new connection TODO non-blocking
-            conn, addr = self.s.accept()
+            # Accept new connection
+            try:
+                conn, addr = self.s.accept()
+            except socket.timeout:
+                continue
+
             if not self.validate_new_connection(conn):
                 self.log.error('Failed to validate connection from {:}:{:}'.format(addr[0], addr[1]))
                 conn.close()
@@ -64,22 +82,29 @@ class SimpleSocketServer:
 
     def _await_client_msg(self, conn):
         addr = conn.getpeername()
+        conn.settimeout(0.5)
 
         while self.running:
-            # Listen data from client TODO non-blocking
+            # Listen data from client
             try:
                 # TCP
                 data = conn.recv(1024)
                 # # UDP
                 # data = conn.recvfrom(1024)
                 # data = data[0]
+            except socket.timeout:
+                continue
             except ConnectionResetError:
-                self._client_hangup(conn, addr)
+                self._client_hangup(conn, addr, reason='reset by client')
+                break
+            except OSError as e:
+                if self.running:
+                    self._client_hangup(conn, addr, reason=str(e))
                 break
 
             # Validate if the client handup
             if len(data) == 0:
-                self._client_hangup(conn, addr)
+                self._client_hangup(conn, addr, reason='reset by client')
                 break
 
             # Decode data as message
