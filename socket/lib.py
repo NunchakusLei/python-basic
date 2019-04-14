@@ -47,7 +47,7 @@ class ColoredFormatter(logging.Formatter):
 def config_logger(app_name, log_level=logging.WARNING):
     # create logger with 'spam_application'
     logger = logging.getLogger(app_name)
-    logger.setLevel(logging.NOTSET)
+    logger.setLevel(logging.DEBUG)
 
     # create file handler which logs even debug messages
     fh = logging.FileHandler('{:}.log'.format(app_name))
