@@ -44,18 +44,18 @@ class ColoredFormatter(logging.Formatter):
         return logging.Formatter.format(self, record)
 
 
-def config_logger(app_name):
+def config_logger(app_name, log_level=logging.WARNING):
     # create logger with 'spam_application'
     logger = logging.getLogger(app_name)
-    logger.setLevel(logging.DEBUG)
+    logger.setLevel(logging.NOTSET)
 
     # create file handler which logs even debug messages
-    fh = logging.FileHandler('.log')
-    fh.setLevel(logging.DEBUG)
+    fh = logging.FileHandler('{:}.log'.format(app_name))
+    fh.setLevel(logging.NOTSET)
 
     # create console handler with a higher log level
     ch = logging.StreamHandler()
-    ch.setLevel(logging.DEBUG)
+    ch.setLevel(log_level)
 
     # create formatter and add it to the handlers
     formatter = logging.Formatter('%(asctime)s - %(name)s [%(levelname)-8s] "%(message)s" (%(filename)s:%(lineno)d)')

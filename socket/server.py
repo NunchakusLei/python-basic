@@ -1,5 +1,6 @@
-import socket
 import argparse
+import logging
+import socket
 import threading
 from lib import load_host_config, config_logger
 
@@ -14,14 +15,14 @@ def config_argparser(ap):
 
 
 class SimpleSocketServer:
-    def __init__(self, host_config):
+    def __init__(self, host_config, log_level=logging.INFO):
         # Setup socket
         self.s = socket.socket()
         self.s.bind((host_config.hostname, host_config.port))
         self.s.listen(5)
 
         # Server variables
-        self.log = config_logger(self.__class__.__name__)
+        self.log = config_logger(self.__class__.__name__, log_level=log_level)
         self._connections=[]
         self._threads = []
         self._config = host_config
@@ -94,6 +95,7 @@ class SimpleSocketServer:
                 self.log.error('Failed to send {:}:{:}: {:s}'.format(addr[0], addr[1], msg))
 
     def boardcast(self, msg):
+        self.log.debug('Boardcast: {:}'.format(msg))
         for i in range(len(self._connections)):
             self.send(i, msg)
 
