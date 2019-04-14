@@ -2,7 +2,6 @@ import argparse
 import logging
 import socket
 import threading
-import sys
 from lib import load_host_config, config_logger
 
 
