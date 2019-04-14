@@ -38,10 +38,19 @@ class SimpleSocketServer:
         self.running = False
         # TODO
 
+    def _client_hangup(self, conn, addr):
+        self.log.info("{:}:{:} hang up.".format(addr[0], addr[1]))
+        self._connections.remove(conn)
+        self.log.debug('{:} live connection(s)'.format(len(self._connections)))
+
     def _await_connections(self):
-        while True:
+        while self.running:
             # Accept new connection TODO non-blocking
             conn, addr = self.s.accept()
+            if not self.validate_new_connection(conn):
+                self.log.error('Failed to validate connection from {:}:{:}'.format(addr[0], addr[1]))
+                continue
+
             self._connections.append(conn)
 
             # Open new thread to listen client messages
@@ -55,19 +64,21 @@ class SimpleSocketServer:
     def _await_client_msg(self, conn):
         addr = conn.getpeername()
 
-        while True:
+        while self.running:
             # Listen data from client TODO non-blocking
-            # TCP
-            data = conn.recv(1024)
-            # # UDP
-            # data = conn.recvfrom(1024)
-            # data = data[0]
+            try:
+                # TCP
+                data = conn.recv(1024)
+                # # UDP
+                # data = conn.recvfrom(1024)
+                # data = data[0]
+            except ConnectionResetError:
+                self._client_hangup(conn, addr)
+                break
 
             # Validate if the client handup
             if len(data) == 0:
-                self.log.info("{:}:{:} hang up.".format(addr[0], addr[1]))
-                self._connections.remove(conn)
-                self.log.debug('{:} live connection(s)'.format(len(self._connections)))
+                self._client_hangup(conn, addr)
                 break
 
             # Decode data as message
@@ -80,6 +91,10 @@ class SimpleSocketServer:
             new_thread = threading.Thread(target=self.msg_callback, args=(addr, msg))
             new_thread.start()
             # self._threads.append(new_thread)
+
+    def validate_new_connection(self, conn):
+        self.log.warning('No validation for new connection (default).')
+        return True
 
     def msg_callback(self, addr, msg):
         return msg
