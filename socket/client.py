@@ -28,7 +28,7 @@ class SimpleSocketClient:
 
     def run(self):
         # Initialize connection
-        if not self.init_connection():
+        if not self.validate_new_connection():
            self.log.critical('Failed to initialize connection.')
            self.stop()
            return
@@ -77,7 +77,7 @@ class SimpleSocketClient:
             new_thread.start()
             # self._threads.append(new_thread)
 
-    def init_connection(self):
+    def validate_new_connection(self):
         self.log.warning('Not validation when connecting initialization (default).')
         return True
 

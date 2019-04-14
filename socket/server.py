@@ -49,6 +49,7 @@ class SimpleSocketServer:
             conn, addr = self.s.accept()
             if not self.validate_new_connection(conn):
                 self.log.error('Failed to validate connection from {:}:{:}'.format(addr[0], addr[1]))
+                conn.close()
                 continue
 
             self._connections.append(conn)
