@@ -67,6 +67,11 @@ class SimpleSocketClient:
                 data = self.s.recv(1024)
             except socket.timeout:
                 continue
+            except OSError as e:
+                if self.running:
+                    self.log.critical('Loss connection to server since {:}'.format(str(e)))
+                    self.stop()
+                break
 
             if len(data) == 0:
                 self.log.info("{:}:{:} hang up.".format(addr[0], addr[1]))
