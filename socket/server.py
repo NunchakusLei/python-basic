@@ -1,7 +1,6 @@
 import socket
 import argparse
 import threading
-import time
 from lib import load_host_config, config_logger
 
 
@@ -14,74 +13,89 @@ def config_argparser(ap):
     )
 
 
-class SocketServer:
+class SimpleSocketServer:
     def __init__(self, host_config):
         # Setup socket
         self.s = socket.socket()
         self.s.bind((host_config.hostname, host_config.port))
         self.s.listen(5)
 
-        self.connections=[]
-        self.threads = []
-        self.config = host_config
+        # Server variables
+        self.log = config_logger(self.__class__.__name__)
+        self._connections=[]
+        self._threads = []
+        self._config = host_config
+        self.running = False
 
-        log.info('Server up, waiting for connection ... ')
-        # log.error('Error')
-        # log.warning('Warning')
-        # log.critical('Critical')
+    def run(self):
+        self.running = True
+        self.log.info('Server up, waiting for connection ... ')
+        self._await_connections()
+
+    def stop(self):
+        # Server exit operation
+        self.running = False
+        # TODO
+
+    def _await_connections(self):
         while True:
-            # Accept new connection
-            conn, addr = self.listening()
+            # Accept new connection TODO non-blocking
+            conn, addr = self.s.accept()
+            self._connections.append(conn)
 
-            # Open new thread to handle client messages
-            new_thread = threading.Thread(
-                target=self.client_handler, args=(conn, addr)
-            )
+            # Open new thread to listen client messages
+            new_thread = threading.Thread(target=self._await_client_msg, args=(conn,))
             new_thread.start()
-            self.threads.append(new_thread)
+            self._threads.append(new_thread)
 
-    def listening(self):
-        conn, addr = self.s.accept()
-        self.connections.append((conn, addr))
-        log.info('Got connection from {:}:{:}'.format(addr[0], addr[1]))
-        log.debug('{:} live connection(s)'.format(len(self.connections)))
-        return conn, addr
+            self.log.info('Got connection from {:}:{:}'.format(addr[0], addr[1]))
+            self.log.debug('{:} live connection(s)'.format(len(self._connections)))
 
-    def client_handler(self, conn, addr):
+    def _await_client_msg(self, conn):
+        addr = conn.getpeername()
+
         while True:
+            # Listen data from client TODO non-blocking
             # TCP
             data = conn.recv(1024)
             # # UDP
             # data = conn.recvfrom(1024)
             # data = data[0]
 
+            # Validate if the client handup
             if len(data) == 0:
-                log.info("{:}:{:} hang up.".format(addr[0], addr[1]))
-                self.connections.remove((conn, addr))
-                log.debug('{:} live connection(s)'.format(len(self.connections)))
+                self.log.info("{:}:{:} hang up.".format(addr[0], addr[1]))
+                self._connections.remove(conn)
+                self.log.debug('{:} live connection(s)'.format(len(self._connections)))
                 break
 
-            log.debug('Reviced message from {:}:{:}: {:s}'.format(addr[0], addr[1], data.decode(self.config.codec)))
-            # log.debug('Binary: {:s}'.format(str(data)))
-            # log.debug('Length: {:}'.format(len(data)))
-            msg = data.decode(self.config.codec)
+            # Decode data as message
+            msg = data.decode(self._config.codec)
+            self.log.debug('Reviced message from {:}:{:}: {:s}'.format(addr[0], addr[1], msg))
+            # self.log.debug('Binary: {:s}'.format(str(data)))
+            # self.log.debug('Length: {:}'.format(len(data)))
 
-            response = self.message_handler(msg)
-            if response is not None:
-                conn.send(response.encode(self.config.codec))
+            # Open new thread to handle client messages
+            new_thread = threading.Thread(target=self.msg_callback, args=(addr, msg))
+            new_thread.start()
+            # self._threads.append(new_thread)
 
-    def message_handler(self, msg):
+    def msg_callback(self, addr, msg):
         return msg
 
-    def boardcast(self, msg):
-        for connection in self.connections:
-            conn = connection[0]
+    def send(self, conn_idx, msg):
+        if len(self._connections) > conn_idx:
+            conn = self._connections[conn_idx]
             addr = conn.getpeername()
             try:
-                conn.send(msg.encode(self.config.codec))
-                log.debug('Sending to {:}:{:}: {:s}'.format(addr[0], addr[1], msg))
+                conn.send(msg.encode(self._config.codec))
+                self.log.debug('Sending to {:}:{:}: {:s}'.format(addr[0], addr[1], msg))
             except BrokenPipeError:
-                log.error('Failed to send {:}:{:}: {:s}'.format(addr[0], addr[1], msg))
+                self.log.error('Failed to send {:}:{:}: {:s}'.format(addr[0], addr[1], msg))
+
+    def boardcast(self, msg):
+        for i in range(len(self._connections)):
+            self.send(i, msg)
 
 
 if __name__ == '__main__':
@@ -91,11 +105,9 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # Load configurations
-    app_name = __file__.split('/')[-1].split('.')[0]
-    log = config_logger(app_name)
     host_config = load_host_config(args.host_config)
 
     # Setup server
-    my_server = SocketServer(host_config)
-
+    my_server = SimpleSocketServer(host_config)
+    my_server.run()
 
